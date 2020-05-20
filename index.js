@@ -1,8 +1,8 @@
 'use strict'
-const fastify = require('fastify')
+const fastify = require(require.resolve('fastify', require.main))
 const fp = require('fastify-plugin')
-const { Test } = require('tap')
-const { dirname, join } = require('path')
+const { Test } = require(require.resolve('tap', require.main))
+const { dirname, join, resolve } = require('path')
 const pkgUp = require('pkg-up')
 
 const {
@@ -10,7 +10,7 @@ const {
 } = process.env
 let app = null
 try {
-  app = require(FASTIFY_BOOT_PATH)
+  app = require(resolve(dirname(pkgUp.sync()), FASTIFY_BOOT_PATH))
 } catch (err) {}
 
 Test.prototype.fastify = function fastifyHarness (rootPlugin = app, opts = {}) {
