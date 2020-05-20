@@ -1,0 +1,22 @@
+{
+  "name": "fastify-tap",
+  "version": "1.0.0",
+  "description": "> Auto-injects a fastify harness into the node-tap test runner",
+  "main": "index.js",
+  "dependencies": {
+    "pkg-up": "^3.1.0"
+  },
+  "devDependencies": {
+    "fastify": "^2.14.1",
+    "fastify-plugin": "^1.6.1",
+    "standard": "^14.3.4",
+    "tap": "^14.10.7"
+  },
+  "scripts": {
+    "test": "tap -R classic -j1 --no-esm",
+    "lint": "standard"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT"
+}
