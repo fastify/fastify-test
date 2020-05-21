@@ -1,47 +1,33 @@
 'use strict'
-require('.')
-const { test, beforeEach } = require('tap')
-const { join } = require('path')
-
-beforeEach(async () => {
-  delete require.cache[require.resolve('.')]
-  require('.')
-})
+const tap = require('tap')
+const fastify = require('fastify')
+require('.')(fastify, tap)
+const { test } = tap
 
 test('adds t.fastify function', async ({ equal, fastify }) => {
   equal(typeof fastify, 'function')
 })
 
-test('loads app.js in project root', async ({ equal, fastify }) => {
-  const app = fastify()
+test('throws if root plugin not provided', async ({ throws, fastify }) => {
+  throws(() => fastify())
+})
+
+test('loads a root plugin/app', async ({ equal, fastify }) => {
+  const app = fastify(async (instance) => {
+    instance.decorate('success', true)
+  })
   await app.ready()
   equal(app.success, true)
 })
 
 test('can be awaited directly as shorthand for awaiting ready()', async ({ equal, fastify }) => {
-  const app = await fastify()
+  const app = await fastify(async (instance) => {
+    instance.decorate('success', true)
+  })
   equal(app.success, true)
 })
 
-test('(silent container)', { silent: true }, async () => {
-  delete require.cache[require.resolve('.')]
-  process.env.FASTIFY_BOOT_PATH = join(__dirname, 'app2.js')
-  require('.')
-  test('root plugin autodetect path can be overriden with FASTIFY_BOOT_PATH env var', async ({ fastify, equal }) => {
-    const app = await fastify()
-    equal(app.success2, true)
-  })
-})
-
-test('can be passed a root plugin for plugin test isolation', async ({ fastify, equal }) => {
-  async function plugin (fastify, opts) {
-    fastify.decorate('customRootPlugin', true)
-  }
-  const app = await fastify(plugin)
-  equal(app.customRootPlugin, true)
-})
-
-test('can be passed opts with a root plugin', async ({ fastify, equal }) => {
+test('can be passed opts with a root plugin/app', async ({ fastify, equal }) => {
   async function plugin (fastify, opts) {
     fastify.decorate(opts.name, opts.value)
   }
@@ -49,8 +35,48 @@ test('can be passed opts with a root plugin', async ({ fastify, equal }) => {
   equal(app.name, 'value')
 })
 
-test('can be passed a null plugin with opts to set opts of autoinject app.js', async ({ fastify, equal }) => {
-  const app = await fastify(null, { set: true })
-  equal(app.success, true)
-  equal(app.optsSet, true)
+test('when awaited directly, rejects appropriately in error cases', async ({ equal, fastify }) => {
+  try {
+    await fastify(async () => {
+      throw Error('test')
+    })
+  } catch (err) {
+    equal(err.message, 'test')
+  }
+})
+
+test('can be used a promise directly as shorthand for ready().then', ({ equal, fastify, end }) => {
+  fastify(async (instance) => {
+    instance.decorate('success', true)
+  }).then((app) => {
+    equal(app.success, true)
+    end()
+  })
+})
+
+test('when used a promise directly, rejects appropriately, .catch check', ({ equal, fastify, end }) => {
+  fastify(async () => {
+    throw Error('test')
+  }).catch((err) => {
+    equal(err.message, 'test')
+    end()
+  })
+})
+
+test('when used a promise directly, rejects appropriately, .then(_, failure) check', ({ equal, fastify, end }) => {
+  fastify(async () => {
+    throw Error('test')
+  }).then(() => {}, (err) => {
+    equal(err.message, 'test')
+    end()
+  })
+})
+
+test('when used a promise directly, rejects appropriately, .then().catch() check', ({ equal, fastify, end }) => {
+  fastify(async () => {
+    throw Error('test')
+  }).then(() => {}).catch((err) => {
+    equal(err.message, 'test')
+    end()
+  })
 })

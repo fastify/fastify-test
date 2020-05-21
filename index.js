@@ -1,40 +1,44 @@
 'use strict'
-const fastify = require(require.resolve('fastify', require.main))
 const fp = require('fastify-plugin')
-const { Test } = require(require.resolve('tap', require.main))
-const { dirname, join, resolve } = require('path')
-const pkgUp = require('pkg-up')
+module.exports = fastifyTap
 
-const {
-  FASTIFY_BOOT_PATH = join(dirname(pkgUp.sync()), 'app.js')
-} = process.env
-let app = null
-try {
-  app = require(resolve(dirname(pkgUp.sync()), FASTIFY_BOOT_PATH))
-} catch (err) {}
+function fastifyTap (fastify, tap) {
+  tap.Test.prototype.fastify = function fastifyHarness (rootPlugin, opts = {}) {
+    if (!rootPlugin) throw Error('rootPlugin is required')
 
-Test.prototype.fastify = function fastifyHarness (rootPlugin = app, opts = {}) {
-  if (!rootPlugin && app === null) throw Error('rootPlugin is required')
-  if (rootPlugin === null) rootPlugin = app
+    const t = this
 
-  const t = this
+    const instance = fastify()
 
-  const instance = fastify()
+    instance.register(fp(rootPlugin), opts)
 
-  instance.register(fp(rootPlugin), opts)
+    t.teardown(() => { instance.close() })
 
-  t.teardown(() => { instance.close() })
-
-  return Object.create(instance, {
-    then: {
-      async value (res, rej) {
-        const ready = instance.ready()
-        try {
-          await ready
-          res(instance)
-        } catch (e) { rej(e) }
-        return ready
+    async function awaitable (resolve, reject) {
+      const ready = instance.ready()
+      try {
+        await ready
+        resolve(instance)
+      } catch (err) {
+        if (reject) reject(err)
+        else throw err
       }
+      return new Proxy(instance, {
+        get (inst, p) {
+          if (p === 'then' || p === 'catch') return async () => {}
+          return inst[p]
+        }
+      })
     }
-  })
+
+    const proxy = new Proxy(instance, {
+      get (inst, p) {
+        if (p === 'then') return awaitable
+        if (p === 'catch') return (reject) => awaitable(() => {}, reject)
+        return inst[p]
+      }
+    })
+
+    return proxy
+  }
 }
