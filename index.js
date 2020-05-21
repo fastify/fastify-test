@@ -41,4 +41,5 @@ function fastifyTap (fastify, tap) {
 
     return proxy
   }
+  return tap
 }
