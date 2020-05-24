@@ -14,32 +14,7 @@ function fastifyTap (fastify, tap) {
 
     t.teardown(() => { instance.close() })
 
-    async function awaitable (resolve, reject) {
-      const ready = instance.ready()
-      try {
-        await ready
-        resolve(instance)
-      } catch (err) {
-        if (reject) reject(err)
-        else throw err
-      }
-      return new Proxy(instance, {
-        get (inst, p) {
-          if (p === 'then' || p === 'catch') return async () => {}
-          return inst[p]
-        }
-      })
-    }
-
-    const proxy = new Proxy(instance, {
-      get (inst, p) {
-        if (p === 'then') return awaitable
-        if (p === 'catch') return (reject) => awaitable(() => {}, reject)
-        return inst[p]
-      }
-    })
-
-    return proxy
+    return instance
   }
   return tap
 }

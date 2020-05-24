@@ -1,5 +1,5 @@
 {
-  "name": "fastify-tap",
+  "name": "fastify-test",
   "version": "1.0.0",
   "description": "Auto-injects a fastify harness into the node-tap test runner",
   "main": "index.js",
@@ -16,6 +16,14 @@
     "lint": "standard"
   },
   "keywords": [],
-  "author": "",
-  "license": "MIT"
+  "author": "David Mark Clements (@davidmarkclem)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fastify/fastify-test.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fastify/fastify-test/issues"
+  },
+  "homepage": "https://github.com/fastify/fastify-test#readme"
 }
