@@ -1,4 +1,4 @@
-# fastify-tap
+# fastify-test
 
 > Auto-injects a fastify harness into the node-tap test runner
 
