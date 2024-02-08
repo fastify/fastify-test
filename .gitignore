@@ -1,5 +1,8 @@
 *.*~
 .idea
+
+#tap files
+.tap/
 .npmrc
 coverage
 package-lock.json
